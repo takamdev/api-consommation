@@ -8,6 +8,8 @@ import * as yup from "yup"
 import ListPasseport from './components/ListPasseport.jsx';
 import { useEffect } from 'react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+
 // definition du schema de validation du formulaire
 const schema = yup
   .object({
@@ -18,36 +20,46 @@ const schema = yup
     dateExp:yup.date().required("ce champ est requis"),
     image:yup.mixed().required('Une image est requis')
   })
-  .required()
 
 
 function App() {
+
   const [list,setList]=useState([])
   const [uploadData,setUploadData]=useState(false)
   const [load,setLoad]=useState(false)
-  const [isexiste,setIsexiste]=useState(false)
+
+
   // recuperation des donnes dans la bd de firebase
   const fetchData = async () => {
     try {
       // Référence à la collection "passager"
       getAll().then(res=>{
-        setList(res.data.data)
+
+        setList(res.data.data.reverse())//reverce() permet de classer les passeports pas ordre d'enregistre
         setLoad(false)
+
       }).catch(err=>{
+
         console.error("Erreur lors de la récupération des utilisateurs:", err);
+
       })
       
      
     } catch (error) {
+
       console.error("Erreur lors de la récupération des utilisateurs:", error);
+
     }
   };
 
   useEffect(()=>{
+
     setLoad(true)//etat de chargement
 
     fetchData();
   },[])
+
+
   const {
     register,
     handleSubmit,
@@ -56,33 +68,40 @@ function App() {
     resolver: yupResolver(schema),
   })
 
+
+const formatDate = (date)=>{
+  return `
+              ${date.getDate()}
+              /
+              ${(parseInt(date.getMonth())+1)<10?("0"+(parseInt(date.getMonth())+1)):(parseInt(date.getMonth())+1)}
+              /${date.getFullYear()}
+              `
+}
+
+
 //sauvegard
   const saveData = async (data,url,fileName)=>{
+
     // construction des données
     const passeport = {
       name:data.Nom,
       contry:data.Pays,
       cartId:data.numCart,
       // formatage de date
-      dateDel:`
-              ${data.dateDel.getDate()}
-              /
-              ${(parseInt(data.dateDel.getMonth())+1)<10?("0"+(parseInt(data.dateDel.getMonth())+1)):(parseInt(data.dateDel.getMonth())+1)}
-              /${data.dateDel.getFullYear()}
-              `,
-      dateExp:`
-            ${data.dateExp.getDate()}
-            /
-            ${(parseInt(data.dateExp.getMonth())+1)<10?("0"+(parseInt(data.dateExp.getMonth())+1)):(parseInt(data.dateExp.getMonth())+1)}
-            /${data.dateExp.getFullYear()}
-            `,
+      dateDel:formatDate(data.dateDel),
+      dateExp:formatDate(data.dateExp),
      img:url,
      fileName:fileName
 
     }
+
+
     //envoie des données
     uploadDta(passeport).then(()=>{
+
       fetchData();
+
+      toast.success("enregistrer avec success",{className:"text-success",style:{transform:"scale(2)"}})
     }).catch(err=>{
       console.log(err);
     })
@@ -90,32 +109,67 @@ function App() {
   
    // filtrage de la liste apret la suppression d'un document
   const filterList = (id)=>{
+
    const newList = list.filter(item=>item.id!==id)
    setList(newList)
+
+
   }
+
   //enregistrement d'un passeport
   const onSubmit = async (data) => {
-    setIsexiste(false)
-    const findCardId = list.find(item=>item.cartId===data.numCart)
-    if(findCardId===undefined){
-      setUploadData(true)//etat de chargemnt
-      const file = data.image[0]//fichier image
+
+    const file = data.image[0]//fichier image
+    console.log(file);
+    
+    const cardidIsExist = list.find(item=>item.cartId===data.numCart)
+    const imgIsExist = list.find(item=>item.fileName===file.name)
+
+    if(cardidIsExist===undefined&&imgIsExist===undefined){
+
+
+      if(!file.type.includes("image")){
+
+        toast.warning('seul les images sont accepter',{className:"text-danger",style:{transform:"scale(2)"}})
+
+      }else{
+
+
+      if(formatDate(data.dateDel)===formatDate(data.dateExp)){
+
+        toast.warning('les dates sont identique!!!',{className:"text-danger",style:{transform:"scale(2)"}})
+
+       }else{
+
+        setUploadData(true)//etat de chargemnt
+     
       // reference vers le store
       const storageRef = ref(storage, `images/${file.name}`);
   
       
       uploadBytes(storageRef, file).then(async ()=>{ // envoie de l'image
-        const urlImage = await getDownloadURL(storageRef)//recuperation de l'url de l'image
-        saveData(data,urlImage,file.name)//appel de la fonction de sauvegard
-        setUploadData(false)//etat de chargement
-      }).catch(err=>{
-        console.log(err);
-      })
-    }else{
-      setIsexiste(true)
-    }
-    
 
+        const urlImage = await getDownloadURL(storageRef)//recuperation de l'url de l'image
+
+        saveData(data,urlImage,file.name)//appel de la fonction de sauvegard
+
+        setUploadData(false)//etat de chargement
+
+      }).catch(err=>{
+
+        console.log(err);
+
+      })
+       }
+      }
+     
+    
+    }else{
+
+      toast.warning('ce passeport est deja enregistrer',{className:"text-danger" ,style:{transform:"scale(2)"}})
+
+    }
+   
 
   }
 
@@ -129,7 +183,6 @@ function App() {
       <section className='row'>
      
       <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data" className='mt-5 col-lg-4 col-md-12 col-sm-12'>
-      {isexiste&&<p className='alert alert-danger' role="alert">ce passeport est déjà enregistrer</p>}
         <div className="form-floating mb-3">
           <input {...register("Nom")} type="text" className="form-control h-25" id="floatingInput" placeholder="Nom"/>
           <label htmlFor="floatingInput">Nom</label>

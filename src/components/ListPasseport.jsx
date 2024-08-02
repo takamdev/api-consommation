@@ -1,6 +1,5 @@
 import { TiDelete } from "react-icons/ti"; 
 import { AiTwotoneEdit } from "react-icons/ai"; 
-import { AiOutlineSearch } from "react-icons/ai"; 
 import { useEffect } from "react";
 import { useState } from "react"
 import { getDownloadURL, ref, uploadBytes,deleteObject } from "firebase/storage";
@@ -25,9 +24,7 @@ function ListPasseport({data,filterList}) {
  const filtre = data
  const [passport ,setPasseport]=useState(data)
  const [filter,setFilter] = useState([])
- const [valueSearch ,setValueSearch]=useState('')
  const [defaultData,setDefaultData]=useState()
- const [loadSearch ,setLoadSearch] = useState(false)
  const [loadUpdate,setLoadUpdate]= useState(false)
  const {
   register,
@@ -94,69 +91,84 @@ const onSubmit = (edit) =>{
 }
 // initialisatiion des donnees
  useEffect(()=>{
+
     const contryList = filtre.map(item=>item.contry)
-    const uniqueArray = [...new Set(contryList)];
+    // filtre des dublication avec l'insensibilieté a la cast
+    const uniqueArray = [...new Set(contryList.map(item => item.toLowerCase()))];
+
     setFilter(uniqueArray)
     setPasseport(data)
+
+    
  },[data])
 
-//recherche pas numero de passeport
- const search = ()=>{
-  if(!loadSearch){//bloquage de l'icone search pendant la recherche
-    setLoadSearch(true)
-    if(valueSearch.trim()!==""){//verification de la valeur du champ de recherche
-      const result = passport.find(item=>item.cartId===valueSearch)//recherche
-      //verification du resultat et mise a jour de la liste de passeport
-      if(result!==undefined)setPasseport([result])
-        else setPasseport([])
-      
-     }
-  }
 
-
- }
  // filtre pas pays
  const select = (value)=>{
-  
-  if(value.trim()!==""){//verification de la valeur champ
-    //filtrage
-    const result= filtre.filter(item =>item.contry===value)
-    //modification de la liste
-    setPasseport(result)
-  }else{
-    //initialisation de la liste si valeur du champ vide
-    setPasseport(data)
-  }
- }
 
+    if(value.trim()!==""){//verification de la valeur champ
+      //filtrage
+
+      const result= filtre.filter(item =>item.contry.toLowerCase()===value.toLowerCase())
+
+      //modification de la liste
+      setPasseport(result)
+
+    }else{
+
+      //initialisation de la liste si valeur du champ vide
+      setPasseport(data)
+
+    }
+ }
+//recherche pas numero de passeport
  const changeValue =(value)=>{
-  setValueSearch(value),setLoadSearch(false)
-  if(value.trim()===""){
-    setPasseport(data)
-  }
+
+    const isInclude = filtre.filter(item=>item.cartId.includes(value))
+
+    setPasseport(isInclude)
+
+    if(value.trim()===""){
+
+      setPasseport(data)
+
+    }
  }
  //suppression d'un passeport
  const deletePasseport = (item)=>{
   // recuperer l'id firebase du passeport
   const id = item.id
 //demande de confirmation
+
   const confirm = window.confirm('voulez vous vraiment supprimer se passeport ?')
+
   if(confirm){
     // Suppression du document
+
     deleteData(id).then(()=>{
+
       const result= passport.filter(item=>item.id!==id)
+
       setPasseport(result)
+
       filterList(id)
       //suppression de l'image
 
       const fileRef = ref(storage, `images/${item.fileName}`);//reference de l'image
+
       deleteObject(fileRef).then(() => {
+
         console.log('Fichier supprimé avec succès');
+
       }).catch((error) => {
+
         console.error('Erreur lors de la suppression du fichier:', error);
+
       });
     }).catch(err=>{
+
         console.log(err);
+
     })
    
    }
@@ -175,7 +187,7 @@ const onSubmit = (edit) =>{
                   <div className="modal-body">
                         <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
                             <div className="form-floating mb-3">
-                            <input defaultValue={defaultData&&defaultData.Name}  {...register("Nom")} type="text" className="form-control h-25" id="floatingInput" placeholder="Nom"/>
+                            <input defaultValue={defaultData&&defaultData.name}  {...register("Nom")} type="text" className="form-control h-25" id="floatingInput" placeholder="Nom"/>
                             <label htmlFor="floatingInput">Nom</label>
                             </div>
                             <p className='text-danger'>{errors.Nom?.message}</p>
@@ -214,8 +226,7 @@ const onSubmit = (edit) =>{
         </div>
         <div className="row filter">
             <p className="col-lg-3 col-md-4 col-sm-5  search">
-             <input className="form-control  mb-2" style={{height:"50px"}} value={valueSearch} onChange={(e)=>{changeValue(e.target.value)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
-             <AiOutlineSearch  className="fs-3 iconSearch" role="button" onClick={search} />
+             <input className="form-control  mb-2" style={{height:"50px"}} onChange={(e)=>{changeValue(e.target.value)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
              </p>
             <p className="mb-2 select col-lg-3 col-md-4 col-sm-5 ms-auto">
               <select className="form-select" style={{height:"50px"}} onChange={(e)=>{select(e.target.value)}}  aria-label="Default select example">
@@ -258,7 +269,7 @@ const onSubmit = (edit) =>{
                                         <td>{item.cartId}</td>
                                         <td>{item.dateDel.toString().replaceAll('\n',"").replaceAll(" ","")}</td>
                                         <td>{item.dateExp.toString().replaceAll('\n',"").replaceAll(" ","")}</td>
-                                        <td><img width={50} src={item.img} alt="image" /></td>
+                                        <td><img width={50} height={50} src={item.img} alt="image" /></td>
                                         <td><TiDelete onClick={()=>{deletePasseport(item)}} style={{color:"red"}} className="fs-3" /><AiTwotoneEdit onClick={()=>{setDefaultData(item)}} data-bs-toggle="modal" data-bs-target="#staticBackdrop"  className="text-primary fs-3"/></td>
                                     </tr>
                         })
