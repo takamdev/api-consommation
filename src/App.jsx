@@ -1,6 +1,5 @@
 
-import { collection, addDoc,getDocs } from 'firebase/firestore';
-import { db } from './firebase/config.js';
+import { getAll,uploadDta } from './apiService/apiService.js';
 import { storage } from './firebase/config.js';
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useForm } from "react-hook-form"
@@ -31,15 +30,14 @@ function App() {
   const fetchData = async () => {
     try {
       // Référence à la collection "passager"
-      const querySnapshot = await getDocs(collection(db, 'passager'));
-      // Transformation des documents en un tableau d'objets
-      const usersList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      //console.log(usersList[0].dateDel.toString().replaceAll('\n',"").replaceAll(" ",""));
-      setList(usersList)
-      setLoad(false)
+      getAll().then(res=>{
+        setList(res.data.data)
+        setLoad(false)
+      }).catch(err=>{
+        console.error("Erreur lors de la récupération des utilisateurs:", err);
+      })
+      
+     
     } catch (error) {
       console.error("Erreur lors de la récupération des utilisateurs:", error);
     }
@@ -60,12 +58,9 @@ function App() {
 
 //sauvegard
   const saveData = async (data,url,fileName)=>{
-    //reference vers la collection
-    const ref =collection(db,"passager")
     // construction des données
-    // modifier passeport en  identitydoc respecter la cass
     const passeport = {
-      Name:data.Nom,
+      name:data.Nom,
       contry:data.Pays,
       cartId:data.numCart,
       // formatage de date
@@ -86,12 +81,11 @@ function App() {
 
     }
     //envoie des données
-    try {
-       await addDoc(ref,passeport)
-       fetchData();//mise a jour dans le dom
-    } catch (error) {
-      console.log(error);
-    }
+    uploadDta(passeport).then(()=>{
+      fetchData();
+    }).catch(err=>{
+      console.log(err);
+    })
    }
   
    // filtrage de la liste apret la suppression d'un document

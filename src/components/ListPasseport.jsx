@@ -4,12 +4,11 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { useEffect } from "react";
 import { useState } from "react"
 import { getDownloadURL, ref, uploadBytes,deleteObject } from "firebase/storage";
-import { doc, deleteDoc,setDoc } from 'firebase/firestore';
-import { db,storage } from "../firebase/config.js";
+import { storage } from "../firebase/config.js";
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-
+import { editData,deleteData } from "../apiService/apiService.js";
 const schema = yup
   .object({
     Nom: yup.string().required("ce champ est requis"),    
@@ -51,13 +50,9 @@ const onSubmit = (edit) =>{
     console.log('Nouveau fichier téléchargé avec succès', snapshot);
     const urlImage = await getDownloadURL(storageRef)//recuperation de l'url de l'image
 //modification des donnees
-
-     //reference vers le document a modifier
-    const docRef = doc(db, 'passager', defaultData.id);
-
-    // Les nouvelles données du document
+    // Les nouvelles données
     const newData = {
-      Name:edit.Nom,
+      name:edit.Nom,
       contry:edit.Pays,
       cartId:edit.numCart,
       // formatage de date
@@ -76,10 +71,8 @@ const onSubmit = (edit) =>{
      img:urlImage,
      fileName:newFile.name
     }
-
-  // Remplacement du document ou création s'il n'existe pas
-  setDoc(docRef, newData)
-    .then(() => {
+    //modification
+    editData(defaultData.id,newData).then(()=>{
       console.log('Document créé ou remplacé avec succès');
       setLoadUpdate(false)//etat de chargement
       // modification au niveau de la'ffichage dans le dom
@@ -93,10 +86,6 @@ const onSubmit = (edit) =>{
       //fermeture du modal de modification
       document.querySelector('#modalClose').click()
     })
-    .catch((error) => {
-      console.error('Erreur lors de la création ou du remplacement du document:', error);
-    });
-    //modification des donnees avec la nouvel url
   }).catch((error) => {
     console.error('Erreur lors du téléchargement du fichier:', error);
   });
@@ -116,7 +105,7 @@ const onSubmit = (edit) =>{
   if(!loadSearch){//bloquage de l'icone search pendant la recherche
     setLoadSearch(true)
     if(valueSearch.trim()!==""){//verification de la valeur du champ de recherche
-      const result = passport.find(item=>item.cartId.includes(valueSearch))//recherche
+      const result = passport.find(item=>item.cartId===valueSearch)//recherche
       //verification du resultat et mise a jour de la liste de passeport
       if(result!==undefined)setPasseport([result])
         else setPasseport([])
@@ -140,6 +129,12 @@ const onSubmit = (edit) =>{
   }
  }
 
+ const changeValue =(value)=>{
+  setValueSearch(value),setLoadSearch(false)
+  if(value.trim()===""){
+    setPasseport(data)
+  }
+ }
  //suppression d'un passeport
  const deletePasseport = (item)=>{
   // recuperer l'id firebase du passeport
@@ -147,26 +142,23 @@ const onSubmit = (edit) =>{
 //demande de confirmation
   const confirm = window.confirm('voulez vous vraiment supprimer se passeport ?')
   if(confirm){
-    //reference du document a supprimer
-    const docRef = doc(db, 'passager', id);
     // Suppression du document
-    deleteDoc(docRef)
-      .then(() => {
-          const result= passport.filter(item=>item.id!==id)
-          setPasseport(result)
-          filterList(id)
-          //suppression de l'image
+    deleteData(id).then(()=>{
+      const result= passport.filter(item=>item.id!==id)
+      setPasseport(result)
+      filterList(id)
+      //suppression de l'image
 
-          const fileRef = ref(storage, `images/${item.fileName}`);//reference de l'image
-          deleteObject(fileRef).then(() => {
-            console.log('Fichier supprimé avec succès');
-          }).catch((error) => {
-            console.error('Erreur lors de la suppression du fichier:', error);
-          });
-      })
-      .catch((error) => {
-        console.error('Erreur lors de la suppression du document:', error);
+      const fileRef = ref(storage, `images/${item.fileName}`);//reference de l'image
+      deleteObject(fileRef).then(() => {
+        console.log('Fichier supprimé avec succès');
+      }).catch((error) => {
+        console.error('Erreur lors de la suppression du fichier:', error);
       });
+    }).catch(err=>{
+        console.log(err);
+    })
+   
    }
  
  }
@@ -222,12 +214,12 @@ const onSubmit = (edit) =>{
         </div>
         <div className="row filter">
             <p className="col-lg-3 col-md-4 col-sm-5  search">
-             <input className="form-control  mb-2" style={{height:"50px"}} value={valueSearch} onChange={(e)=>{setValueSearch(e.target.value),setLoadSearch(false)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
+             <input className="form-control  mb-2" style={{height:"50px"}} value={valueSearch} onChange={(e)=>{changeValue(e.target.value)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
              <AiOutlineSearch  className="fs-3 iconSearch" role="button" onClick={search} />
              </p>
             <p className="mb-2 select col-lg-3 col-md-4 col-sm-5 ms-auto">
               <select className="form-select" style={{height:"50px"}} onChange={(e)=>{select(e.target.value)}}  aria-label="Default select example">
-                  <option value="" selected>fitrer pas pays</option>
+                  <option value="" selected>tous les pays</option>
                   {
                       filter.map((item,key)=>{
                           return <option key={key} value={item}>{item}</option>
@@ -261,7 +253,7 @@ const onSubmit = (edit) =>{
                         passport.map((item,key)=>{
                             return  <tr key={key}>
                                         <th scope="row">{key+1}</th>
-                                        <td>{item.Name}</td>
+                                        <td>{item.name}</td>
                                         <td>{item.contry}</td>
                                         <td>{item.cartId}</td>
                                         <td>{item.dateDel.toString().replaceAll('\n',"").replaceAll(" ","")}</td>
