@@ -6,7 +6,11 @@
     right: 20px;
     top: 8px;
 }
-
+.direction{
+    position: fixed;
+    top: 700px;
+    right: 20px;
+}
 @media screen and (max-width:580px) {
     .filter{
         margin-top: 10px !important;
@@ -21,5 +25,13 @@
         position: absolute;
         right: 20px;
         top: 12px;
+    }
+
+}
+@media screen and (max-width:993px) {
+    .direction{
+        position: initial;
+        top: initial;
+        right: initial;
     }
 }

@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { editData,deleteData } from "../apiService/apiService.js";
+import TableComponent from "./Table.jsx";
 const schema = yup
   .object({
     Nom: yup.string().required("ce champ est requis"),    
@@ -226,14 +227,14 @@ const onSubmit = (edit) =>{
         </div>
         <div className="row filter">
             <p className="col-lg-3 col-md-4 col-sm-5  search">
-             <input className="form-control  mb-2" style={{height:"50px"}} onChange={(e)=>{changeValue(e.target.value)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
+             <input className="form-control  " style={{height:"50px"}} onChange={(e)=>{changeValue(e.target.value)}}  type="text"  id="floatingInput" placeholder="identifiant"/>
              </p>
-            <p className="mb-2 select col-lg-3 col-md-4 col-sm-5 ms-auto">
+            <p className=" select col-lg-3 col-md-4 col-sm-5 ms-auto">
               <select className="form-select" style={{height:"50px"}} onChange={(e)=>{select(e.target.value)}}  aria-label="Default select example">
                   <option value="" selected>tous les pays</option>
                   {
                       filter.map((item,key)=>{
-                          return <option key={key} value={item}>{item}</option>
+                          return <option key={key}  value={item}>{item}</option>
                       })
                   }
               </select>
@@ -243,42 +244,8 @@ const onSubmit = (edit) =>{
             passport.length ===0 ? (
               <p className="text-center fs-4">aucun passeport trouver</p>
             ):(
-              <div className="table-responsive">
-                 <table className="table  w-100">
-                    <thead>
-                        <tr>
-                        <th scope="col">N</th>
-                        <th scope="col">Nom</th>
-                        <th scope="col">Pays</th>
-                        <th scope="col">identifiant</th>                
-                        <th scope="col">délivrance</th>             
-                        <th scope="col">expiration</th>
-                        <th scope="col">photo</th>
-                        <th scope="col">action</th>
-
-
-                        </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        passport.map((item,key)=>{
-                            return  <tr key={key}>
-                                        <th scope="row">{key+1}</th>
-                                        <td>{item.name}</td>
-                                        <td>{item.contry}</td>
-                                        <td>{item.cartId}</td>
-                                        <td>{item.dateDel.toString().replaceAll('\n',"").replaceAll(" ","")}</td>
-                                        <td>{item.dateExp.toString().replaceAll('\n',"").replaceAll(" ","")}</td>
-                                        <td><img width={50} height={50} src={item.img} alt="image" /></td>
-                                        <td><TiDelete onClick={()=>{deletePasseport(item)}} style={{color:"red"}} className="fs-3" /><AiTwotoneEdit onClick={()=>{setDefaultData(item)}} data-bs-toggle="modal" data-bs-target="#staticBackdrop"  className="text-primary fs-3"/></td>
-                                    </tr>
-                        })
-                        
-                      }
-                        
-                      
-                    </tbody>
-                </table>
+              <div>
+                <TableComponent setDefaultData={setDefaultData} deletePasseport={deletePasseport} key={5} Passport={passport}/>
               </div>
                
             )

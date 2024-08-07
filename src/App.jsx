@@ -176,7 +176,7 @@ const formatDate = (date)=>{
 
   
   return (
-    <main className='container-fluid mt-5'>
+    <main className='container-fluid mt-5 pt-5'>
       <div style={{backgroundColor:"#e7be43",height:'100px' ,textAlign:"center"}}>
          <p className='fs-3 fw-bold' style={{paddingTop:"25px"}}>Enregistrement de passeport</p>
       </div>
