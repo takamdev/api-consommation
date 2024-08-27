@@ -9,7 +9,6 @@ import ListPasseport from './components/ListPasseport.jsx';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
 // definition du schema de validation du formulaire
 const schema = yup
   .object({
@@ -34,7 +33,7 @@ function App() {
     try {
       // Référence à la collection "passager"
       getAll().then(res=>{
-
+          
         setList(res.data.data.reverse())//reverce() permet de classer les passeports pas ordre d'enregistre
         setLoad(false)
 
@@ -53,7 +52,6 @@ function App() {
   };
 
   useEffect(()=>{
-
     setLoad(true)//etat de chargement
 
     fetchData();
@@ -110,7 +108,7 @@ const formatDate = (date)=>{
    // filtrage de la liste apret la suppression d'un document
   const filterList = (id)=>{
 
-   const newList = list.filter(item=>item.id!==id)
+   const newList = list.filter(item=>item._id!==id)
    setList(newList)
 
 

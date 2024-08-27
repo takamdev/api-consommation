@@ -138,7 +138,7 @@ const onSubmit = (edit) =>{
  //suppression d'un passeport
  const deletePasseport = (item)=>{
   // recuperer l'id firebase du passeport
-  const id = item.id
+  const id = item._id
 //demande de confirmation
 
   const confirm = window.confirm('voulez vous vraiment supprimer se passeport ?')
@@ -148,8 +148,10 @@ const onSubmit = (edit) =>{
 
     deleteData(id).then(()=>{
 
-      const result= passport.filter(item=>item.id!==id)
+      const result= passport.filter(item=>item._id!==id)
 
+      
+       
       setPasseport(result)
 
       filterList(id)

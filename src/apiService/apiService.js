@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = "https://simon.zayado.net/public/api/identitydocs"
+const url = "http://localhost:3500/public/api/identitydocs"
 
 
 export async  function getAll(){

@@ -25,7 +25,7 @@ function TableComponent({setDefaultData,deletePasseport, Passport }) {
     ()=>passport,
     [Passport]
   )
-  console.log(data);
+
 
   const columns = React.useMemo(
 
