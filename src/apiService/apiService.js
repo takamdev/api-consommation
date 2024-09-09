@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const url = "http://localhost:3500/public/api/identitydocs"
+const url = "https://api-passport.vercel.app/public/api/identitydocs"
 
 
 export async  function getAll(){
