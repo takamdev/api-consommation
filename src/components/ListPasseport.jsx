@@ -70,13 +70,13 @@ const onSubmit = (edit) =>{
      fileName:newFile.name
     }
     //modification
-    editData(defaultData.id,newData).then(()=>{
+    editData(defaultData._id,newData).then(()=>{
       console.log('Document créé ou remplacé avec succès');
       setLoadUpdate(false)//etat de chargement
       // modification au niveau de la'ffichage dans le dom
       
       //filtrage
-      let newPasseport=passport.filter(item=>item.id!==defaultData.id)
+      let newPasseport=passport.filter(item=>item._id!==defaultData._id)
       newPasseport = [...newPasseport,newData]
       //modification
       setPasseport(newPasseport)
